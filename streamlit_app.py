@@ -38,8 +38,7 @@ for i in range(idx):
         if correct_on == datetime.now().date():
             correct_today += 1
 
-bar = st.progress(0)
-bar.progress(max(correct_today, 100))
+st.progress(min(correct_today, 100))
 st.write(f"Number correct today: {correct_today} out of 100")
 
 num1, num2 = get_nums(name, idx)
