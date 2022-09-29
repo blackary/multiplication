@@ -1,6 +1,6 @@
-# fly.toml file generated for st-database on 2022-08-31T14:40:04-04:00
+# fly.toml file generated for multiplication on 2022-09-29T09:04:16-04:00
 
-app = "st-database"
+app = "multiplication"
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = []
