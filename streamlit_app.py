@@ -6,9 +6,9 @@ import streamlit as st
 
 from st_database import database
 
-st.set_page_config("Multiplication practice")
+st.set_page_config("Multiplication practice", page_icon="✖️")
 
-st.title("Multiplication practice")
+st.title("Multiplication practice ✖️")
 
 st.write("This is a simple multiplication practice app.")
 
@@ -55,7 +55,8 @@ if num_correct >= DAILY_GOAL:
         incorrect_guesses = sum([len(c["incorrect_guesses"]) for c in correct_today])
         problems_missed = [c for c in correct_today if len(c["incorrect_guesses"]) > 0]
         total_time = (
-            correct_today[-1]["correct_answer_on"] - correct_today[0]["correct_answer_on"]
+            correct_today[-1]["correct_answer_on"]
+            - correct_today[0]["correct_answer_on"]
         )
         time_in_minutes = int(total_time.total_seconds() / 60)
         st.write(f"Total number correct: **{num_correct}**")
