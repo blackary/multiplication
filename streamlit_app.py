@@ -4,8 +4,78 @@ import random
 from datetime import date, datetime
 
 import streamlit as st
+from streamlit_extras.let_it_rain import rain
 
 from get_stats import DAILY_GOAL, answers, show_stats, users
+
+emoji_options = [
+    "🎈",
+    "🎉",
+    "🎊",
+    "🎆",
+    "🎇",
+    "🧨",
+    "✨",
+    "🎀",
+    "🎁",
+    "🎗️",
+    "🎟️",
+    "🎫",
+    "🎖️",
+    "🏆",
+    "🏅",
+    "🥇",
+    "🥈",
+    "🥉",
+    "🏵️",
+]
+
+# Add animals to the emoji options
+emoji_options += [
+    "🐶",
+    "🐱",
+    "🐭",
+    "🐹",
+    "🐰",
+    "🦊",
+    "🐻",
+    "🐼",
+    "🐨",
+    "🐯",
+    "🦁",
+    "🐮",
+    "🐷",
+    "🐽",
+    "🐸",
+    "🐵",
+    "🙈",
+    "🙉",
+    "🙊",
+    "🐒",
+    "🐔",
+    "🐧",
+    "🐦",
+    "🐤",
+    "🐣",
+    "🐥",
+    "🦆",
+    "🦅",
+    "🦉",
+    "🦇",
+    "🐺",
+    "🐗",
+    "🐴",
+    "🦄",
+    "🐝",
+    "🐛",
+    "🦋",
+    "🐌",
+    "🐞",
+    "🐜",
+    "🕷️",
+    "🦂",
+]
+
 
 st.set_page_config("Multiplication practice")
 
@@ -29,18 +99,35 @@ if name == st.secrets["see_all_name"]:
     st.stop()
 
 
+try:
+    user = users.fetch({"name": name}).items[0]
+except IndexError:
+    user = {"name": name, "total_score": 0, "last_answered": 0, "emoji": "🎈"}
+    user = users.put(user)
+
+if not user.get("emoji", ""):
+    user["emoji"] = "🎈"
+
+emoji_picker = st.selectbox("Pick an emoji", options=emoji_options, index=emoji_options.index(user["emoji"]))
+
+if emoji_picker != user["emoji"]:
+    user["emoji"] = emoji_picker
+    users.put(user)
+
+rain(
+    emoji=emoji_picker,
+    font_size=54,
+    falling_speed=5,
+    animation_length="infinite",
+)
+
+
 def get_nums(name: str, num: int) -> tuple[int, int]:
     random.seed(name + str(num))
     num1 = random.randint(1, 10)
     num2 = random.randint(1, 10)
     return num1, num2
 
-
-try:
-    user = users.fetch({"name": name}).items[0]
-except IndexError:
-    user = {"name": name, "total_score": 0, "last_answered": 0}
-    user = users.put(user)
 
 correct_today = answers.fetch(
     {"name": name, "correct_answer_on": str(date.today())}, limit=DAILY_GOAL
