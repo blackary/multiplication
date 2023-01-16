@@ -1,14 +1,11 @@
+from __future__ import annotations
+
 import random
 from datetime import date, datetime
-from time import sleep
 
 import streamlit as st
-from dateutil import parser
 
-# from st_database import database
-from deta import Deta
-
-deta = Deta(st.secrets["deta_project_key"])
+from get_stats import DAILY_GOAL, answers, show_stats, users
 
 st.set_page_config("Multiplication practice")
 
@@ -16,9 +13,19 @@ st.title("Multiplication practice")
 
 st.write("This is a simple multiplication practice app.")
 
-name = st.text_input("What is your name?").lower()
+if "name" not in st.session_state:
+    st.session_state["name"] = ""
+
+name = st.text_input("What is your name?", value=st.session_state["name"]).lower()
+
 
 if not name:
+    st.stop()
+
+st.session_state["name"] = name
+
+if name == st.secrets["see_all_name"]:
+    st.write("Go to stats to see all stats")
     st.stop()
 
 
@@ -29,19 +36,14 @@ def get_nums(name: str, num: int) -> tuple[int, int]:
     return num1, num2
 
 
-answers = deta.Base("multiplication_answers")
-users = deta.Base("multiplication_users")
-
 try:
     user = users.fetch({"name": name}).items[0]
 except IndexError:
     user = {"name": name, "total_score": 0, "last_answered": 0}
     user = users.put(user)
 
-DAILY_GOAL = 10
-
 correct_today = answers.fetch(
-    {"name": name, "correct_answer_on?pfx": str(date.today())}, limit=DAILY_GOAL
+    {"name": name, "correct_answer_on": str(date.today())}, limit=DAILY_GOAL
 ).items
 
 idx = user["last_answered"]
@@ -59,25 +61,8 @@ if num_correct in [DAILY_GOAL, DAILY_GOAL + 1]:
 
 if num_correct >= DAILY_GOAL:
     with st.expander("See how you did today", expanded=True):
-        for item in correct_today:
-            item["correct_answer_on"] = parser.parse(item["correct_answer_on"])
-        start_time = min(correct_today, key=lambda x: x["correct_answer_on"])[
-            "correct_answer_on"
-        ]
-        end_time = max(correct_today, key=lambda x: x["correct_answer_on"])[
-            "correct_answer_on"
-        ]
-        incorrect_guesses = sum([len(c["incorrect_guesses"]) for c in correct_today])
-        problems_missed = [c for c in correct_today if len(c["incorrect_guesses"]) > 0]
-        total_time = end_time - start_time
-        time_in_minutes = int(total_time.total_seconds() / 60)
-        st.write(f"Total number correct: **{num_correct}**")
-        st.write(f"Total wrong answers: **{incorrect_guesses}**")
-        st.write("Problems missed:")
-        for p in problems_missed:
-            guesses = ", ".join(str(g) for g in p["incorrect_guesses"])
-            f"* {p['num1']} x {p['num2']} = {p['num1'] * p['num2']} (guessed {guesses})"
-        st.write(f"Total time: **{time_in_minutes} minutes**")
+        show_stats(name, date.today())
+
 
 num1, num2 = get_nums(name, idx)
 
@@ -93,11 +78,12 @@ except IndexError:
             "answer": num1 * num2,
             "incorrect_guesses": [],
             "correct_answer_on": None,
+            "correct_answer_at": None,
         }
     )
 
 
-text_answer = st.text_input(f"{num1} x {num2} = ")
+text_answer = st.text_input(f"{num1} x {num2} = ", key=idx)
 submit = st.button("Submit")
 
 if not text_answer and not submit:
@@ -111,19 +97,14 @@ except ValueError:
 
 if attempted_answer != num1 * num2:
     st.error("Incorrect!")
-    # data = db[idx]
     answer["incorrect_guesses"].append(attempted_answer)
-    # data["incorrect_guesses"].append(answer)
-    # db[idx] = data
     answers.put(answer, key=answer["key"])
 else:
     st.write("Correct!")
     st.balloons()
     user["last_answered"] += 1
-    # data = db[idx]
-    answer["correct_answer_on"] = str(datetime.now())
-    # db[idx] = data
+    answer["correct_answer_at"] = str(datetime.now())
+    answer["correct_answer_on"] = str(date.today())
     answers.put(answer, key=answer["key"])
     users.put(user, key=user["key"])
-    sleep(1)
     st.experimental_rerun()
