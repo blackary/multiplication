@@ -4,7 +4,7 @@ import streamlit as st
 from dateutil import parser
 from deta import Deta
 
-DAILY_GOAL = 15
+DAILY_GOAL = 100
 GOAL_MINUTES = 20
 
 deta = Deta(st.secrets["deta_project_key"])
